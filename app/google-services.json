@@ -1,0 +1,55 @@
+{
+  "project_info": {
+    "project_number": "741166282259",
+    "project_id": "ghotok2",
+    "storage_bucket": "ghotok2.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:741166282259:android:12662c4606c3a69538b1e6",
+        "android_client_info": {
+          "package_name": "com.codevory.ghotok"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "741166282259-9ge88506m0p0vt9ocp6qfhdegak52top.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.codevory.ghotok",
+            "certificate_hash": "32c8eca2bf3c0913be941689b405614420f36401"
+          }
+        },
+        {
+          "client_id": "741166282259-c2njjsi64kkn1rrs3ao5gotsnhnakq75.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.codevory.ghotok",
+            "certificate_hash": "70a6efc45bb2abbdb23f560cb1d31f55a7b992ae"
+          }
+        },
+        {
+          "client_id": "741166282259-le5c5iva45hr4duuagu8au6b346476rv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD2Fb84w-cm8z6IooHxZSxdVTD8KeX-IMw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "741166282259-le5c5iva45hr4duuagu8au6b346476rv.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

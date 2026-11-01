@@ -1,0 +1,6 @@
+{
+  "name": "Ghotok",
+  "description": "Bangladeshi matrimony app with secure verification, packages, private chat, and family-oriented matchmaking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

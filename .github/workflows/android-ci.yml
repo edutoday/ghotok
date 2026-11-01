@@ -1,0 +1,46 @@
+name: Android CI
+
+on:
+  push:
+    branches: [ "main", "master", "develop" ]
+  pull_request:
+    branches: [ "main", "master", "develop" ]
+
+jobs:
+  build-and-test:
+    name: Build APK & Run Unit Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 21
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Install Firestore rules test dependencies
+        run: npm ci
+
+      - name: Run JVM, Robolectric, and Firestore rules tests
+        run: firebase emulators:exec --project demo-no-project --only firestore,auth "./gradlew :app:testDebugUnitTest && npm run test:firestore-rules"
+
+      - name: Assemble Debug APK
+        run: ./gradlew :app:assembleDebug
+
+      - name: Upload Debug APK Artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ghotok-bd-debug-apk
+          path: app/build/outputs/apk/debug/*.apk

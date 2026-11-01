@@ -1,0 +1,5 @@
+[functions.cloudinary-upload]
+verify_jwt = true
+
+[functions.verify-google-play-purchase]
+verify_jwt = true

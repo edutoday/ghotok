@@ -1,0 +1,235 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile with personal, family, and partner preference details for matchmaking.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "profileCode": { "type": "string" },
+        "displayName": { "type": "string" },
+        "displayNameBangla": { "type": "string" },
+        "email": { "type": "string" },
+        "photoUrl": { "type": "string" },
+        "gender": { "type": "string", "enum": ["Male", "Female"] },
+        "age": { "type": "integer" },
+        "maritalStatus": { "type": "string" },
+        "bloodGroup": { "type": "string" },
+        "complexion": { "type": "string" },
+        "height": { "type": "string" },
+        "weight": { "type": "integer" },
+        "religion": { "type": "string" },
+        "education": { "type": "string" },
+        "ieltsScore": { "type": "string" },
+        "profession": { "type": "string" },
+        "locationDivision": { "type": "string" },
+        "locationDistrict": { "type": "string" },
+        "fatherProfession": { "type": "string" },
+        "motherProfession": { "type": "string" },
+        "siblingsCount": { "type": "string" },
+        "financialCondition": { "type": "string" },
+        "presentAddress": { "type": "string" },
+        "permanentAddress": { "type": "string" },
+        "overseasCountry": { "type": "string" },
+        "citizenshipStatus": { "type": "string" },
+        "contactPhone": { "type": "string" },
+        "guardianPhone": { "type": "string" },
+        "partnerAgeMin": { "type": "integer" },
+        "partnerAgeMax": { "type": "integer" },
+        "partnerEducation": { "type": "string" },
+        "partnerReligion": { "type": "string" },
+        "partnerProfession": { "type": "string" },
+        "partnerDistrict": { "type": "string" },
+        "isVerified": { "type": "boolean" },
+        "verificationStatus": { "type": "string", "enum": ["UNSUBMITTED", "PENDING", "VERIFIED", "REJECTED"] },
+        "verificationDocType": { "type": "string" },
+        "verificationIdNumber": { "type": "string" },
+        "verificationDocUri": { "type": "string" },
+        "accountStatus": { "type": "string", "enum": ["ACTIVE", "SUSPENDED", "HIDDEN"] },
+        "packageTier": { "type": "string", "enum": ["Free", "Silver", "Gold", "Diamond"] },
+        "pendingPackageTier": { "type": "string" },
+        "interestsRemaining": { "type": "integer" },
+        "contactsRemaining": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "displayName", "gender", "age", "maritalStatus", "religion", "profession", "locationDistrict", "packageTier", "createdAt"]
+    },
+    "VerificationRequest": {
+      "title": "VerificationRequest",
+      "description": "User-submitted NID, Passport, or professional ID verification request for Admin Web App review.",
+      "type": "object",
+      "properties": {
+        "requestId": { "type": "string" },
+        "userId": { "type": "string" },
+        "profileCode": { "type": "string" },
+        "displayName": { "type": "string" },
+        "gender": { "type": "string" },
+        "docType": { "type": "string" },
+        "idNumber": { "type": "string" },
+        "docUrl": { "type": "string" },
+        "status": { "type": "string", "enum": ["PENDING", "APPROVED", "REJECTED"] },
+        "adminNote": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["requestId", "userId", "profileCode", "docType", "idNumber", "docUrl", "status", "createdAt"]
+    },
+    "PaymentRequest": {
+      "title": "PaymentRequest",
+      "description": "User-submitted bKash/Nagad/Rocket/Bank payment request for Admin Web App package activation.",
+      "type": "object",
+      "properties": {
+        "requestId": { "type": "string" },
+        "userId": { "type": "string" },
+        "profileCode": { "type": "string" },
+        "displayName": { "type": "string" },
+        "packageTier": { "type": "string", "enum": ["Silver", "Gold", "Diamond"] },
+        "amountBdt": { "type": "integer" },
+        "paymentMethod": { "type": "string" },
+        "senderPhone": { "type": "string" },
+        "transactionId": { "type": "string" },
+        "interestsToCredit": { "type": "integer" },
+        "contactsToCredit": { "type": "integer" },
+        "status": { "type": "string", "enum": ["PENDING", "APPROVED", "REJECTED"] },
+        "adminNote": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["requestId", "userId", "profileCode", "packageTier", "amountBdt", "paymentMethod", "senderPhone", "transactionId", "status", "createdAt"]
+    },
+    "AdminNotification": {
+      "title": "AdminNotification",
+      "description": "Targeted push and in-app notification or audience segment broadcast dispatched from the Admin Web App.",
+      "type": "object",
+      "properties": {
+        "notificationId": { "type": "string" },
+        "type": { "type": "string", "enum": ["BROADCAST", "DISCOUNT", "ACCOUNT_APPROVED", "KYC_APPROVED", "KYC_REJECTED", "PACKAGE_APPROVED", "PACKAGE_REJECTED", "MATCH_FOUND", "SYSTEM"] },
+        "targetSegment": { "type": "string" },
+        "targetUserId": { "type": "string" },
+        "targetProfileCode": { "type": "string" },
+        "title": { "type": "string" },
+        "body": { "type": "string" },
+        "titleBn": { "type": "string" },
+        "bodyBn": { "type": "string" },
+        "matchedUserId": { "type": "string" },
+        "matchedProfileCode": { "type": "string" },
+        "matchedUserName": { "type": "string" },
+        "matchedUserPhoto": { "type": "string" },
+        "matchScore": { "type": "integer" },
+        "packageTier": { "type": "string" },
+        "actionRoute": { "type": "string" },
+        "showBanner": { "type": "boolean" },
+        "pushNotification": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["type", "createdAt"]
+    },
+    "Interest": {
+      "title": "Interest",
+      "description": "Interest or proposal sent from one member to another.",
+      "type": "object",
+      "properties": {
+        "interestId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "receiverId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "senderPhoto": { "type": "string" },
+        "receiverName": { "type": "string" },
+        "status": { "type": "string", "enum": ["pending", "accepted", "declined"] },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["interestId", "senderId", "receiverId", "status", "createdAt"]
+    },
+    "ChatThread": {
+      "title": "ChatThread",
+      "description": "Private chat conversation between two matched members.",
+      "type": "object",
+      "properties": {
+        "chatId": { "type": "string" },
+        "participantIds": { "type": "array" },
+        "lastMessage": { "type": "string" },
+        "lastMessageSenderId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["chatId", "participantIds", "createdAt"]
+    },
+    "ChatMessage": {
+      "title": "ChatMessage",
+      "description": "Individual chat message within a thread.",
+      "type": "object",
+      "properties": {
+        "messageId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "text": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["messageId", "senderId", "text", "createdAt"]
+    },
+    "AdminUser": {
+      "title": "AdminUser",
+      "description": "Trusted admin account record for the companion Admin Web App.",
+      "type": "object",
+      "properties": {
+        "email": { "type": "string" },
+        "role": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["email", "role"]
+    }
+  },
+  "firestore": {
+    "/users/{docId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "User matrimonial profile and account metadata"
+    },
+    "/profiles/{docId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Public biodata attributes keyed by formatted profile code"
+    },
+    "/profileContacts/{docId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Protected contact numbers and addresses keyed by formatted profile code"
+    },
+    "/preferences/{docId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Partner preference criteria keyed by formatted profile code"
+    },
+    "/verificationRequests/{docId}": {
+      "schema": { "$ref": "#/entities/VerificationRequest" },
+      "description": "Identity verification queue for Admin Web App approval"
+    },
+    "/paymentRequests/{requestId}": {
+      "schema": { "$ref": "#/entities/PaymentRequest" },
+      "description": "bKash/Nagad/Rocket payment queue for Admin Web App package activation"
+    },
+    "/notifications/{notificationId}": {
+      "schema": { "$ref": "#/entities/AdminNotification" },
+      "description": "Targeted user notifications and audience segment broadcasts from Admin Web App"
+    },
+    "/broadcasts/{broadcastId}": {
+      "schema": { "$ref": "#/entities/AdminNotification" },
+      "description": "Targeted audience segment broadcasts and bilingual campaigns from Admin Web App"
+    },
+    "/interests/{interestId}": {
+      "schema": { "$ref": "#/entities/Interest" },
+      "description": "Matrimonial proposal interests between users"
+    },
+    "/chats/{chatId}": {
+      "schema": { "$ref": "#/entities/ChatThread" },
+      "description": "Chat conversations between matched members"
+    },
+    "/chats/{chatId}/messages/{messageId}": {
+      "schema": { "$ref": "#/entities/ChatMessage" },
+      "description": "Individual messages in a chat thread"
+    },
+    "/admins/{adminId}": {
+      "schema": { "$ref": "#/entities/AdminUser" },
+      "description": "Admin user whitelist for companion Admin Web App"
+    }
+  }
+}

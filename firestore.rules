@@ -1,0 +1,285 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default deny all
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isFormattedUserDocId(docId) {
+      return docId is string && docId.matches('^[BG][0-9]{6,}$');
+    }
+
+    // Companion Admin Web App & client authorization driven by /admins collection or verified custom claim
+    function isAdmin() {
+      return isSignedIn() && (
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid)) ||
+        (
+          'email' in request.auth.token &&
+          request.auth.token.email_verified == true &&
+          exists(/databases/$(database)/documents/admins/$(request.auth.token.email))
+        ) ||
+        (
+          'is_admin' in request.auth.token &&
+          request.auth.token.email_verified == true &&
+          request.auth.token.is_admin == true
+        )
+      );
+    }
+
+    function isNonEscalatedUserCreate() {
+      return incoming().userId == request.auth.uid &&
+        (!('accountStatus' in incoming()) || incoming().accountStatus == 'ACTIVE') &&
+        (!('isVerified' in incoming()) || incoming().isVerified == false) &&
+        (!('verified' in incoming()) || incoming().verified == false) &&
+        (!('verificationStatus' in incoming()) || incoming().verificationStatus in ['UNSUBMITTED', 'PENDING']) &&
+        (!('packageTier' in incoming()) || incoming().packageTier == 'Free') &&
+        (!('packageActivatedAt' in incoming()) || incoming().packageActivatedAt == 0) &&
+        (!('packageExpiresAt' in incoming()) || incoming().packageExpiresAt == 0) &&
+        (!('interestsRemaining' in incoming()) || incoming().interestsRemaining <= 2) &&
+        (!('contactsRemaining' in incoming()) || incoming().contactsRemaining == 0) &&
+        (!('isPremium' in incoming()) || incoming().isPremium == false) &&
+        (!('isFeatured' in incoming()) || incoming().isFeatured == false) &&
+        (!('isAdmin' in incoming()) || incoming().isAdmin == false) &&
+        (!('is_admin' in incoming()) || incoming().is_admin == false) &&
+        (!('admin' in incoming()) || incoming().admin == false) &&
+        (!('role' in incoming()) || incoming().role == 'USER');
+    }
+
+    function isNonEscalatedUserUpdate() {
+      return existing().userId == request.auth.uid &&
+        incoming().userId == request.auth.uid &&
+        (!('accountStatus' in incoming()) || incoming().accountStatus == existing().get('accountStatus', 'ACTIVE')) &&
+        (!('isVerified' in incoming()) || incoming().isVerified == existing().get('isVerified', false) || incoming().isVerified == false) &&
+        (!('verified' in incoming()) || incoming().verified == existing().get('verified', false) || incoming().verified == false) &&
+        (!('verificationStatus' in incoming()) || incoming().verificationStatus in ['UNSUBMITTED', 'PENDING'] || incoming().verificationStatus == existing().get('verificationStatus', 'UNSUBMITTED')) &&
+        (!('packageTier' in incoming()) || incoming().packageTier == existing().get('packageTier', 'Free') || incoming().packageTier == 'Free') &&
+        (!('packageActivatedAt' in incoming()) || incoming().packageActivatedAt == existing().get('packageActivatedAt', 0)) &&
+        (!('packageExpiresAt' in incoming()) || incoming().packageExpiresAt == existing().get('packageExpiresAt', 0)) &&
+        (!('interestsRemaining' in incoming()) || incoming().interestsRemaining <= existing().get('interestsRemaining', 2)) &&
+        (!('contactsRemaining' in incoming()) || incoming().contactsRemaining <= existing().get('contactsRemaining', 0)) &&
+        (!('isPremium' in incoming()) || incoming().isPremium == existing().get('isPremium', false) || incoming().isPremium == false) &&
+        (!('isFeatured' in incoming()) || incoming().isFeatured == existing().get('isFeatured', false) || incoming().isFeatured == false) &&
+        (!('isAdmin' in incoming()) || incoming().isAdmin == existing().get('isAdmin', false) || incoming().isAdmin == false) &&
+        (!('is_admin' in incoming()) || incoming().is_admin == existing().get('is_admin', false) || incoming().is_admin == false) &&
+        (!('admin' in incoming()) || incoming().admin == existing().get('admin', false) || incoming().admin == false) &&
+        (!('role' in incoming()) || incoming().role == existing().get('role', 'USER') || incoming().role == 'USER');
+    }
+
+    function hasNoPrivatePublicProfileFields() {
+      return !incoming().keys().hasAny([
+        'email', 'phone', 'phoneNumber', 'phone_number', 'contactPhone',
+        'guardianPhone', 'candidateMobile', 'guardianMobile', 'contactEmail',
+        'whatsapp', 'imo', 'facebook', 'instagram', 'dateOfBirth', 'date_of_birth',
+        'presentAddress', 'permanentAddress', 'present_address', 'permanent_address',
+        'fcmToken', 'fcm_token',
+        'verificationDocType', 'verificationIdNumber', 'verificationDocUri',
+        'verification_doc_type', 'verification_id_number', 'verification_doc_uri',
+        'verificationStatus', 'packageActivatedAt', 'packageExpiresAt',
+        'pendingPackageTier', 'interestsRemaining', 'contactsRemaining',
+        'savedProfileIds', 'payload', 'privateContacts', 'contactDetails'
+      ]);
+    }
+
+    function isChatParticipant(chatId) {
+      let chatPath = /databases/$(database)/documents/chats/$(chatId);
+      return isAdmin() ||
+        (isSignedIn() &&
+          exists(chatPath) &&
+          request.auth.uid in get(chatPath).data.participantIds);
+    }
+
+    function isPrivateRecordOwner() {
+      return isSignedIn() &&
+        (existing().get('userId', '') == request.auth.uid ||
+         existing().get('ownerId', '') == request.auth.uid ||
+         existing().get('reporterId', '') == request.auth.uid ||
+         existing().get('createdBy', '') == request.auth.uid);
+    }
+
+    match /admins/{adminId} {
+      allow read: if isAdmin() ||
+        (isSignedIn() && 'email' in request.auth.token && adminId == request.auth.token.email);
+      allow write: if isAdmin();
+    }
+
+    match /users/{docId} {
+      allow read: if isAdmin() || (isSignedIn() && existing().userId == request.auth.uid);
+      allow create: if isAdmin() || (isSignedIn() && isNonEscalatedUserCreate());
+      allow update: if isAdmin() || (isSignedIn() && isNonEscalatedUserUpdate());
+      allow delete: if isAdmin() || (isSignedIn() && existing().userId == request.auth.uid);
+    }
+
+    match /publicProfiles/{docId} {
+      allow read: if isSignedIn();
+      allow create: if hasNoPrivatePublicProfileFields() &&
+        (isAdmin() || (isSignedIn() && isNonEscalatedUserCreate()));
+      allow update: if hasNoPrivatePublicProfileFields() &&
+        (isAdmin() || (isSignedIn() && isNonEscalatedUserUpdate()));
+      allow delete: if isAdmin() || (isSignedIn() && existing().userId == request.auth.uid);
+    }
+
+    match /onboardingDrafts/{userId} {
+      allow read: if isAdmin() || (isSignedIn() && (userId == request.auth.uid || (resource != null && existing().userId == request.auth.uid)));
+      allow create, update: if isAdmin() || (isSignedIn() && (userId == request.auth.uid || incoming().userId == request.auth.uid));
+      allow delete: if isAdmin() || (isSignedIn() && (userId == request.auth.uid || existing().userId == request.auth.uid));
+    }
+
+    match /profiles/{docId} {
+      allow read: if isAdmin() || (isSignedIn() && existing().userId == request.auth.uid);
+      allow create: if isAdmin() || (isSignedIn() && isNonEscalatedUserCreate());
+      allow update: if isAdmin() || (isSignedIn() && isNonEscalatedUserUpdate());
+      allow delete: if isAdmin() || (isSignedIn() && existing().userId == request.auth.uid);
+    }
+
+    match /profileContacts/{docId} {
+      allow read: if isAdmin() ||
+        (isSignedIn() && (docId == request.auth.uid || existing().userId == request.auth.uid));
+      allow create: if isAdmin() || (isSignedIn() && (docId == request.auth.uid || incoming().userId == request.auth.uid));
+      allow update: if isAdmin() || (isSignedIn() && (docId == request.auth.uid || existing().userId == request.auth.uid) && incoming().userId == request.auth.uid);
+      allow delete: if isAdmin() || (isSignedIn() && (docId == request.auth.uid || existing().userId == request.auth.uid));
+    }
+
+    match /preferences/{docId} {
+      allow read: if isAdmin() || (isSignedIn() && (docId == request.auth.uid || existing().userId == request.auth.uid));
+      allow create: if isAdmin() || (isSignedIn() && (docId == request.auth.uid || incoming().userId == request.auth.uid));
+      allow update: if isAdmin() || (isSignedIn() && (docId == request.auth.uid || existing().userId == request.auth.uid));
+      allow delete: if isAdmin() || (isSignedIn() && (docId == request.auth.uid || existing().userId == request.auth.uid));
+    }
+
+    match /verificationRequests/{docId} {
+      allow read: if isAdmin() || (isSignedIn() && (resource == null || existing().userId == request.auth.uid));
+      allow create: if isAdmin() || (isSignedIn() && incoming().userId == request.auth.uid && incoming().status == 'PENDING');
+      allow update: if isAdmin() || (isSignedIn() && existing().userId == request.auth.uid && incoming().userId == request.auth.uid && incoming().status == 'PENDING');
+      allow delete: if isAdmin();
+    }
+
+    match /paymentRequests/{requestId} {
+      allow read: if isAdmin() || (isSignedIn() && (resource == null || existing().userId == request.auth.uid));
+      allow create: if isAdmin() || (isSignedIn() && incoming().userId == request.auth.uid && incoming().status == 'PENDING');
+      allow update: if isAdmin() || (isSignedIn() && existing().userId == request.auth.uid && incoming().userId == request.auth.uid && incoming().status == 'PENDING');
+      allow delete: if isAdmin();
+    }
+
+    match /notifications/{notificationId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /broadcasts/{broadcastId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+
+    match /interests/{interestId} {
+      allow read: if isAdmin() ||
+        (isSignedIn() &&
+          (existing().senderId == request.auth.uid || existing().receiverId == request.auth.uid));
+      allow create: if isAdmin() || (isSignedIn() && incoming().senderId == request.auth.uid);
+      allow update: if isAdmin() ||
+        (isSignedIn() &&
+          (existing().senderId == request.auth.uid || existing().receiverId == request.auth.uid) &&
+          incoming().senderId == existing().senderId &&
+          incoming().receiverId == existing().receiverId &&
+          (incoming().status == existing().status || existing().receiverId == request.auth.uid));
+      allow delete: if isAdmin() ||
+        (isSignedIn() && existing().senderId == request.auth.uid);
+    }
+
+    function isAcceptedInterestForIncomingChat() {
+      let interestPath = /databases/$(database)/documents/interests/$(incoming().interestId);
+      return isSignedIn() &&
+        incoming().participantIds is list &&
+        incoming().participantIds.size() == 2 &&
+        request.auth.uid in incoming().participantIds &&
+        'interestId' in incoming() &&
+        exists(interestPath) &&
+        get(interestPath).data.status == 'accepted' &&
+        get(interestPath).data.senderId in incoming().participantIds &&
+        get(interestPath).data.receiverId in incoming().participantIds;
+    }
+
+    match /chats/{chatId} {
+      allow read: if isAdmin() ||
+        (isSignedIn() &&
+          (request.auth.uid in existing().get('participantIds', []) ||
+           existing().get('participant_a', '') == request.auth.uid ||
+           existing().get('participant_b', '') == request.auth.uid));
+      allow create: if isAdmin() || isAcceptedInterestForIncomingChat();
+      allow update: if isAdmin() ||
+        (isSignedIn() &&
+          request.auth.uid in existing().get('participantIds', []) &&
+          incoming().get('participantIds', []) == existing().get('participantIds', []) &&
+          incoming().get('interestId', '') == existing().get('interestId', ''));
+      allow delete: if isAdmin() ||
+        (isSignedIn() && request.auth.uid in existing().get('participantIds', []));
+    }
+
+    match /chats/{chatId}/messages/{messageId} {
+      allow read: if isChatParticipant(chatId);
+      allow create: if isAdmin() ||
+        (isSignedIn() &&
+          incoming().senderId == request.auth.uid &&
+          isChatParticipant(chatId));
+      allow update: if isAdmin() ||
+        (isChatParticipant(chatId) &&
+          existing().senderId == request.auth.uid &&
+          incoming().senderId == existing().senderId &&
+          incoming().text == existing().text);
+      allow delete: if isAdmin() ||
+        (isChatParticipant(chatId) && existing().senderId == request.auth.uid);
+    }
+
+    match /reports/{reportId} {
+      allow read: if isAdmin() || isPrivateRecordOwner();
+      allow create: if isSignedIn() &&
+        (incoming().get('userId', '') == request.auth.uid ||
+         incoming().get('reporterId', '') == request.auth.uid ||
+         incoming().get('createdBy', '') == request.auth.uid);
+      allow update, delete: if isAdmin();
+    }
+
+    match /disputes/{disputeId} {
+      allow read: if isAdmin() || isPrivateRecordOwner() ||
+        (isSignedIn() && request.auth.uid in existing().get('participantIds', []));
+      allow create: if isSignedIn() &&
+        (incoming().get('userId', '') == request.auth.uid ||
+         incoming().get('createdBy', '') == request.auth.uid ||
+         request.auth.uid in incoming().get('participantIds', []));
+      allow update, delete: if isAdmin();
+    }
+
+    match /callLogs/{logId} {
+      allow read: if isAdmin() || isPrivateRecordOwner() ||
+        (isSignedIn() &&
+          (existing().get('callerId', '') == request.auth.uid ||
+           existing().get('calleeId', '') == request.auth.uid ||
+           request.auth.uid in existing().get('participantIds', [])));
+      allow create: if isSignedIn() &&
+        (incoming().get('callerId', '') == request.auth.uid ||
+         incoming().get('userId', '') == request.auth.uid);
+      allow update, delete: if isAdmin();
+    }
+
+    match /auditLogs/{logId} {
+      allow read, write: if isAdmin();
+    }
+  }
+}
